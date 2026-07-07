@@ -1,10 +1,11 @@
-// We use Tavily to search for the company's annual report/filings
+// Read the Tavily API key from environment variables
 const apiKey = process.env.TAVILY_API_KEY;
 
+// This function searches the web using Tavily to find the latest annual report PDF of the company
 async function getLatest10K(symbol) {
     const url = "https://api.tavily.com/search";
     
-    // This query searches for the latest annual report PDF of the company
+    // Search query designed to find the annual report PDF
     const query = symbol + " latest annual report 10-K filing PDF";
     
     const requestBody = {
@@ -23,7 +24,22 @@ async function getLatest10K(symbol) {
             body: JSON.stringify(requestBody)
         });
 
-        const data = await response.json();
+        // If the server returns an HTTP error code, print the error text
+        if (!response.ok) {
+            const errText = await response.text();
+            console.log("Tavily API returned error status:", response.status, errText);
+            return null;
+        }
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            const rawText = await response.text();
+            console.log("Tavily response was not valid JSON. Body:", rawText.substring(0, 500));
+            return null;
+        }
+
         const results = data.results || [];
         
         if (results.length === 0) {
@@ -31,10 +47,10 @@ async function getLatest10K(symbol) {
             return null;
         }
 
-        // We return the top result (title, URL, and a snippet)
+        // Return the best match (title, URL, and a snippet of text content)
         return {
             title: results[0].title,
-            secUrl: results[0].url, // We keep the property name 'secUrl' so our controller doesn't break!
+            secUrl: results[0].url, 
             snippet: results[0].content
         };
     } catch (error) {
