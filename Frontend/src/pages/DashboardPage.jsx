@@ -95,8 +95,9 @@ function DashboardPage() {
     setReport(null);
 
     try {
+      const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       // Call the API endpoint on our Express backend
-      const response = await fetch('http://localhost:3000/api/research', {
+      const response = await fetch(`${BACKEND_URL}/api/research`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
