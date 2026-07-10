@@ -55,11 +55,12 @@ const StateAnnotation = Annotation.Root({
 async function financialAgentNode(state) {
     console.log("💰 [Financial Agent] Starting analysis for " + state.symbol);
     
-    const prompt = `You are a friendly financial advisor. Read these metrics for ${state.symbol}:
-    Metrics: ${JSON.stringify(state.financialData)}
+    const prompt = `You are a friendly financial advisor. Read these metrics or search snippets for ${state.symbol}:
+    Data: ${JSON.stringify(state.financialData)}
     
     Write exactly 2-3 extremely short, jargon-free bullet points summarizing the financials.
     - Keep each bullet point under 12 words.
+    - If standard metrics are N/A but search snippets are available, summarize those recent revenue/growth figures.
     - Explain metrics simply (e.g. instead of P/E ratios or margins, say "earning good profits" or "healthy margins").
     - Write for a complete beginner.`;
 
@@ -69,7 +70,7 @@ async function financialAgentNode(state) {
         return { financialAnalysis: response.content };
     } catch (err) {
         console.log("💰 [Financial Agent] Error occurred:", err.message);
-        return { financialAnalysis: "Failed to analyze financials." };
+        return { financialAnalysis: "• No recent financial details available to summarize." };
     }
 }
 
@@ -91,7 +92,7 @@ async function newsAgentNode(state) {
         return { newsAnalysis: response.content };
     } catch (err) {
         console.log("📰 [News Agent] Error occurred:", err.message);
-        return { newsAnalysis: "Failed to analyze news." };
+        return { newsAnalysis: "• No recent news details available to summarize." };
     }
 }
 
@@ -99,8 +100,8 @@ async function newsAgentNode(state) {
 async function riskAgentNode(state) {
     console.log("⚠️ [Risk Agent] Checking report risks for " + state.symbol);
     
-    const prompt = `You are a risk advisor. Read these annual report details:
-    Filings: ${JSON.stringify(state.filingData)}
+    const prompt = `You are a risk advisor. Read these annual report details or search snippets for ${state.symbol}:
+    Data: ${JSON.stringify(state.filingData)}
     
     Write exactly 2-3 extremely short, jargon-free bullet points listing key risks/problems.
     - Keep each bullet point under 12 words.
@@ -113,7 +114,7 @@ async function riskAgentNode(state) {
         return { riskAnalysis: response.content };
     } catch (err) {
         console.log("⚠️ [Risk Agent] Error occurred:", err.message);
-        return { riskAnalysis: "Failed to analyze risks." };
+        return { riskAnalysis: "• No recent risk reports available to summarize." };
     }
 }
 
@@ -135,7 +136,7 @@ async function trustAgentNode(state) {
         return { trustAnalysis: response.content };
     } catch (err) {
         console.log("👥 [Trust Agent] Error occurred:", err.message);
-        return { trustAnalysis: "Failed to analyze trust." };
+        return { trustAnalysis: "• No recent trust reviews available to summarize." };
     }
 }
 

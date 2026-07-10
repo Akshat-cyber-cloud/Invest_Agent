@@ -108,7 +108,59 @@ async function getCompanyTrustAndReviews(companyName) {
     }
 }
 
+// This function searches for key risks and challenges of the company
+async function searchCompanyRisks(companyName) {
+    const url = "https://api.tavily.com/search";
+    const requestBody = {
+        api_key: apiKey,
+        query: companyName + " key business risks challenges vulnerabilities problems issues",
+        search_depth: "advanced",
+        max_results: 3
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+        if (!response.ok) return "";
+        const data = await response.json();
+        return (data.results || []).map(r => r.content).join("\n\n");
+    } catch (error) {
+        console.log("Error in searchCompanyRisks:", error);
+        return "";
+    }
+}
+
+// This function searches for high-level financials and performance metrics
+async function searchCompanyFinancials(companyName) {
+    const url = "https://api.tavily.com/search";
+    const requestBody = {
+        api_key: apiKey,
+        query: companyName + " latest revenue net profit margins financial growth metrics",
+        search_depth: "advanced",
+        max_results: 3
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody)
+        });
+        if (!response.ok) return "";
+        const data = await response.json();
+        return (data.results || []).map(r => r.content).join("\n\n");
+    } catch (error) {
+        console.log("Error in searchCompanyFinancials:", error);
+        return "";
+    }
+}
+
 module.exports = {
     getCompanyNews,
-    getCompanyTrustAndReviews
+    getCompanyTrustAndReviews,
+    searchCompanyRisks,
+    searchCompanyFinancials
 };

@@ -3,45 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, TrendingUp, Newspaper, AlertTriangle, Download, Settings, Users, LogOut, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
 
-// Mascot "O" Component (Alarm Clock Character)
-const MascotO = () => (
-  <svg viewBox="0 0 100 100" className="clario-mascot-o" style={{ width: '100%', height: '100%', display: 'block' }}>
-    {/* Alarm bells */}
-    <path d="M15 25 C15 12, 32 12, 32 25 Z" fill="#ff5e97" stroke="#000" strokeWidth="4.5" strokeLinejoin="round" />
-    <rect x="21" y="24" width="4" height="6" fill="#000" transform="rotate(-15 23 27)" />
-    <path d="M68 25 C68 12, 85 12, 85 25 Z" fill="#ff5e97" stroke="#000" strokeWidth="4.5" strokeLinejoin="round" />
-    <rect x="75" y="24" width="4" height="6" fill="#000" transform="rotate(15 77 27)" />
-    
-    {/* Bell clappers */}
-    <circle cx="23.5" cy="12" r="5" fill="#ffcc00" stroke="#000" strokeWidth="3" />
-    <circle cx="76.5" cy="12" r="5" fill="#ffcc00" stroke="#000" strokeWidth="3" />
-    
-    {/* Legs */}
-    <rect x="30" y="82" width="9" height="12" rx="4" fill="#000" />
-    <rect x="61" y="82" width="9" height="12" rx="4" fill="#000" />
-    
-    {/* Main body circle */}
-    <circle cx="50" cy="55" r="35" fill="#5d6eff" stroke="#000" strokeWidth="4.5" />
-    <circle cx="48" cy="51" r="32" fill="none" stroke="#7e8eff" strokeWidth="3.5" opacity="0.4" />
-    
-    {/* Eyes */}
-    <ellipse cx="38" cy="50" rx="7" ry="10" fill="#fff" stroke="#000" strokeWidth="3.5" />
-    <ellipse cx="62" cy="50" rx="7" ry="10" fill="#fff" stroke="#000" strokeWidth="3.5" />
-    {/* Pupils */}
-    <circle cx="39" cy="48" r="3.5" fill="#000" />
-    <circle cx="63" cy="48" r="3.5" fill="#000" />
-    {/* Eye Highlights */}
-    <circle cx="37" cy="45" r="1.5" fill="#fff" />
-    <circle cx="61" cy="45" r="1.5" fill="#fff" />
-    
-    {/* Cheeks */}
-    <circle cx="28" cy="60" r="3" fill="#ff5e97" opacity="0.6" />
-    <circle cx="72" cy="60" r="3" fill="#ff5e97" opacity="0.6" />
-    
-    {/* Smile/mouth */}
-    <path d="M42 66 Q50 73 58 66" fill="none" stroke="#000" strokeWidth="4" strokeLinecap="round" />
-  </svg>
-);
+// Mascot is removed for a professional corporate layout.
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -260,10 +222,7 @@ function DashboardPage() {
         <div className="sidebar-top">
           {/* Logo with Mascot */}
           <div className="sidebar-logo">
-            <span style={{ color: '#ffcc00', WebkitTextStroke: '1.5px #000', textShadow: '2px 2px 0px #000' }}>CLARI</span>
-            <div className="clario-mascot-o-container" style={{ width: '32px', height: '32px', top: '1px' }}>
-              <MascotO />
-            </div>
+            <span style={{ color: '#ffcc00', WebkitTextStroke: '1.5px #000', textShadow: '2px 2px 0px #000' }}>CLARIO</span>
           </div>
 
           {/* User profile card widget */}
@@ -353,8 +312,10 @@ function DashboardPage() {
         {/* Loading state spinner */}
         {loading && (
           <div className="loading-box">
-            <div style={{ width: '100px', height: '100px', animation: 'spin-clockwise 6s linear infinite' }}>
-              <MascotO />
+            <div style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e0f2fe', border: '3px solid #000', borderRadius: '50%', boxShadow: '4px 4px 0px #000', marginBottom: '10px' }}>
+              <div style={{ animation: 'spin-clockwise 3s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <TrendingUp size={48} strokeWidth={2.5} />
+              </div>
             </div>
             <p style={{ fontWeight: 800, color: '#000', fontSize: '16px', marginTop: '10px' }}>
               Orchestrating agents in parallel... Please wait (~5-10s)
@@ -666,10 +627,10 @@ function DashboardPage() {
         {/* Empty State when no search has been run */}
         {!report && !loading && (
           <div className="empty-state-box">
-            <div style={{ width: '120px', height: '120px' }}>
-              <MascotO />
+            <div style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3e8ff', border: '3px solid #000', borderRadius: '50%', boxShadow: '4px 4px 0px #000', marginBottom: '15px' }}>
+              <TrendingUp size={48} strokeWidth={2.5} style={{ color: '#a855f7' }} />
             </div>
-            <h3 style={{ margin: '12px 0 6px 0', fontSize: '20px', fontFamily: 'Outfit', fontWeight: 900 }}>Ready to Auditing?</h3>
+            <h3 style={{ margin: '12px 0 6px 0', fontSize: '20px', fontFamily: 'Outfit', fontWeight: 900 }}>Ready to Audit?</h3>
             <p style={{ margin: 0, color: '#4b5563', maxWidth: '420px', lineHeight: 1.5 }}>
               No research reports generated yet. Enter a ticker in the console above to dispatch Clario's parallel analyst agents.
             </p>

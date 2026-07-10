@@ -49,18 +49,40 @@ async function researchCompany(req, res) {
         // Step 1: Fetch company metrics and details from Finnhub
         console.log("📊 [Server] Fetching Finnhub financials...");
         const profile = await finnhubService.getCompanyProfile(targetSymbol);
-        const metrics = await finnhubService.getCompanyMetrics(targetSymbol);
+        let metrics = await finnhubService.getCompanyMetrics(targetSymbol);
 
         // Fall back to the symbol if the profile name isn't found
         const companyName = (profile && profile.name) ? profile.name : targetSymbol;
 
         // Step 2: Fetch news articles, annual report URL, and reputation reviews in parallel to save time
         console.log("🕸️ [Server] Fetching Tavily news, trust reputation, and SEC report PDF...");
-        const [news, filing, trust] = await Promise.all([
+        let [news, filing, trust] = await Promise.all([
             tavilyService.getCompanyNews(companyName),
             edgarService.getLatest10K(companyName),
             tavilyService.getCompanyTrustAndReviews(companyName)
         ]);
+
+        // Fallback for SEC filings: If filing is null, search Tavily for risks
+        if (!filing || !filing.snippet) {
+            console.log(`🔍 [Server] SEC filings unavailable for ${companyName}. Falling back to Tavily risk search...`);
+            const riskSearch = await tavilyService.searchCompanyRisks(companyName);
+            filing = {
+                title: "Public Risk Analysis (Web Search)",
+                secUrl: "N/A",
+                snippet: riskSearch || "No risk reports or challenges found."
+            };
+        }
+
+        // Fallback for Financial Metrics: If Finnhub metrics are missing, search Tavily for financials
+        const hasFinancials = metrics && (metrics.peRatio !== undefined || metrics.netProfitMargin !== undefined || metrics.eps !== undefined);
+        if (!hasFinancials) {
+            console.log(`🔍 [Server] Finnhub financials unavailable for ${companyName}. Falling back to Tavily financials search...`);
+            const financialSearch = await tavilyService.searchCompanyFinancials(companyName);
+            metrics = {
+                ...metrics,
+                tavilyFinancialsSnippet: financialSearch || "No public financial performance metrics found."
+            };
+        }
 
         // Step 3: Run the Multi-Agent LangGraph workflow
         console.log("🧠 [Server] Initializing LangGraph multi-agent flow...");
