@@ -1,12 +1,12 @@
-# Clario: Multi-Agent Investment Research Terminal
+# Clari: Multi-Agent Investment Research Terminal
 
-Clario is an AI-powered financial research terminal designed to run parallel, specialist multi-agent workflows. It ingests data from multiple financial and public feedback channels, resolves ticker symbols, and outputs a structured investment verdict alongside granular agent reports on a custom, responsive Neobrutalist dashboard.
+Clari is an AI-powered financial research terminal designed to run parallel, specialist multi-agent workflows. It ingests data from multiple financial and public feedback channels, resolves ticker symbols, and outputs a structured investment verdict alongside granular agent reports on a custom, responsive Neobrutalist dashboard.
 
 ---
 
 ##  System Architecture
 
-Clario uses a **Frontend-Backend separation** combined with a **parallel multi-agent workflow** structured using LangGraph.
+Clari uses a **Frontend-Backend separation** combined with a **parallel multi-agent workflow** structured using LangGraph.
 
 ```mermaid
 graph TD
