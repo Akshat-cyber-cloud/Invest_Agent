@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, TrendingUp, Newspaper, AlertTriangle, Download, Settings, Users, LogOut, ExternalLink, FileText } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { Search, TrendingUp, Newspaper, AlertTriangle, Download, Settings, Users, LogOut, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+
 
 // Mascot "O" Component (Alarm Clock Character)
 const MascotO = () => (
@@ -45,6 +45,20 @@ const MascotO = () => (
 
 function DashboardPage() {
   const navigate = useNavigate();
+  
+  // Sidebar toggle state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebar_open');
+    return saved !== 'false';
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => {
+      const next = !prev;
+      localStorage.setItem('sidebar_open', String(next));
+      return next;
+    });
+  };
   
   // State variables for stock search
   const [symbol, setSymbol] = useState('');
@@ -107,74 +121,7 @@ function DashboardPage() {
     }
   };
 
-  // Export report as a clean PDF using jsPDF
-  const exportPDF = () => {
-    if (!report) return;
 
-    const doc = new jsPDF();
-    const sym = report.symbol;
-    const name = report.companyName;
-    const decision = report.decision;
-    const analyses = report.agentAnalyses;
-
-    // Header styling
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); // Obsidian Black
-    doc.text(`CLARIO - Research Report`, 20, 25);
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139); // Muted grey
-    doc.text(`Company: ${name} (${sym})`, 20, 35);
-    doc.text(`Date Generated: ${new Date().toLocaleDateString()}`, 20, 42);
-
-    // Line separator
-    doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.5);
-    doc.line(20, 48, 190, 48);
-
-    // Verdict Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(15, 23, 42);
-    doc.text("1. Investment Verdict", 20, 58);
-
-    doc.setFontSize(12);
-    doc.text(`Recommendation: ${decision.recommendation}`, 20, 68);
-    doc.text(`Investment Score: ${decision.score}/100`, 20, 74);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`Reasoning: ${decision.reasoning}`, 20, 82, { maxWidth: 170 });
-
-    doc.line(20, 95, 190, 95);
-
-    // Agent Analysis Section
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text("2. Agent Research Summaries", 20, 105);
-
-    doc.setFontSize(12);
-    // Financial Agent
-    doc.text("💰 Financial Analyst Agent:", 20, 115);
-    doc.setFont("helvetica", "normal");
-    doc.text(analyses.financialAnalysis || "No financial analysis gathered.", 20, 122, { maxWidth: 170 });
-
-    // News Agent
-    doc.setFont("helvetica", "bold");
-    doc.text("📰 Sentiment Analyst Agent:", 20, 155);
-    doc.setFont("helvetica", "normal");
-    doc.text(analyses.newsAnalysis || "No news analysis gathered.", 20, 162, { maxWidth: 170 });
-
-    // Risk Agent
-    doc.setFont("helvetica", "bold");
-    doc.text("⚠️ Risk Assessment Agent:", 20, 195);
-    doc.setFont("helvetica", "normal");
-    doc.text(analyses.riskAnalysis || "No risk analysis gathered.", 20, 202, { maxWidth: 170 });
-
-    // Save report
-    doc.save(`${sym}_Research_Report.pdf`);
-  };
 
   // Helper to print bullet points cleanly
   const renderBulletPoints = (text) => {
@@ -199,22 +146,116 @@ function DashboardPage() {
     return num < 1 && num > -1 ? `${(num * 100).toFixed(2)}%` : `${num.toFixed(2)}%`;
   };
 
+  // Helper to truncate text to 50-100 words and highlight key numbers, growth metrics, and risk words
+  const renderHighlightedSummary = (text, maxWords = 75) => {
+    if (!text) return "";
+    
+    // Clean up raw table delimiters, vertical pipes, dashes, and duplicate spaces
+    const cleanText = text
+      .replace(/\|+/g, ' ') // Replace vertical pipes with spaces
+      .replace(/-{3,}/g, ' ') // Replace multiple dashes (table separators) with spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+      .trim();
+
+    const words = cleanText.split(/\s+/);
+    const isTruncated = words.length > maxWords;
+    const truncatedText = isTruncated ? words.slice(0, maxWords).join(" ") + "..." : cleanText;
+    
+    // Pattern to match currency/numbers ($1B, $208M, 34%, 10-K), GMV, revenue, profit, surged, growth, positive, record, etc.
+    const highlightRegex = /(\$\d+(?:\.\d+)?(?:[MBKmbk])\+?|\b\d+%\b|\bGMV\b|\brevenue\b|\bgrowth\b|\brecord-breaking\b|\bprofit\b|\bsurged\b|\bcapital\b)/gi;
+    
+    const parts = truncatedText.split(highlightRegex);
+    return (
+      <>
+        {parts.map((part, index) => {
+          if (part.match(highlightRegex)) {
+            return (
+              <mark 
+                key={index} 
+                style={{ 
+                  backgroundColor: '#fde047', // Neobrutalist yellow mark
+                  color: '#000000', 
+                  padding: '1px 4px', 
+                  borderRadius: '4px', 
+                  fontWeight: '800',
+                  border: '1.5px solid #000000',
+                  boxShadow: '1px 1px 0px #000000',
+                  display: 'inline-block',
+                  margin: '0 2px'
+                }}
+              >
+                {part}
+              </mark>
+            );
+          }
+          return part;
+        })}
+      </>
+    );
+  };
+
+  // Helper to get color depending on the score
+  const getScoreColor = (score) => {
+    const s = parseFloat(score);
+    if (isNaN(s) || s < 40) return '#ff5e97'; // Pink/Red
+    if (s < 70) return '#ff9e22'; // Orange/Yellow
+    return '#22c55e'; // Green
+  };
+
+  // Helper to get CSS badge class based on recommendation
+  const getRecommendationClass = (rec) => {
+    if (!rec) return 'badge-pass';
+    const r = rec.toLowerCase();
+    if (r === 'invest') return 'badge-invest';
+    if (r === 'hold') return 'badge-hold';
+    return 'badge-pass';
+  };
+
+  // Helper to calculate a percentage score representing news sentiment positivity
+  const calculateSentimentScore = (newsText) => {
+    if (!newsText) return 50;
+    const text = newsText.toLowerCase();
+    let positiveCount = 0;
+    let negativeCount = 0;
+    
+    const positiveWords = ['positive', 'grow', 'strong', 'bullish', 'exceeded', 'record', 'increase', 'profit', 'surged', 'success'];
+    const negativeWords = ['negative', 'concern', 'risk', 'bearish', 'decline', 'weak', 'loss', 'decrease', 'debt', 'threat'];
+    
+    positiveWords.forEach(w => { if (text.includes(w)) positiveCount++; });
+    negativeWords.forEach(w => { if (text.includes(w)) negativeCount++; });
+    
+    const total = positiveCount + negativeCount;
+    if (total === 0) return 50;
+    return Math.round((positiveCount / total) * 100);
+  };
+
   // Map backend Finnhub/Tavily/EDGAR fields to JSX variable names
-  const companyMetrics = report?.rawData?.metrics ? {
-    peRatio: report.rawData.metrics.peRatio,
-    eps: report.rawData.metrics.eps,
-    profitMargin: report.rawData.metrics.netProfitMargin,
-    high52: report.rawData.metrics.high52Week,
-    low52: report.rawData.metrics.low52Week,
+  const companyMetrics = report?.companyMetrics ? {
+    peRatio: report.companyMetrics.peRatio,
+    eps: report.companyMetrics.eps,
+    profitMargin: report.companyMetrics.profitMargin,
+    high52: report.companyMetrics.high52,
+    low52: report.companyMetrics.low52,
   } : {};
   
-  const companyNews = report?.rawData?.news || [];
-  const filingData = report?.rawData?.filing || null;
+  const companyNews = report?.companyNews || [];
+  const filingData = report?.filingData || null;
+
+  const hasFinancials = companyMetrics.peRatio !== 'N/A' || companyMetrics.eps !== 'N/A' || companyMetrics.profitMargin !== 'N/A';
 
   return (
     <div className="dashboard-layout">
       {/* 1. LEFT SIDEBAR: ChatGPT-Style Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
+        {/* Toggle Button */}
+        <button 
+          className="sidebar-toggle-btn" 
+          onClick={toggleSidebar}
+          aria-label={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        >
+          {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
+
         <div className="sidebar-top">
           {/* Logo with Mascot */}
           <div className="sidebar-logo">
@@ -226,10 +267,10 @@ function DashboardPage() {
 
           {/* User profile card widget */}
           <div className="profile-card">
-            <div className="avatar-circle">A</div>
+            <div className="avatar-circle">C</div>
             <div className="profile-info">
-              <span className="profile-name">Akshat Gupta</span>
-              <span className="profile-email">akshat001@gmail.com</span>
+              <span className="profile-name">Clari Guest</span>
+              <span className="profile-email">Free Plan</span>
             </div>
           </div>
 
@@ -276,11 +317,7 @@ function DashboardPage() {
       <main className="main-content">
         <header className="content-header">
           <h2>Research Terminal</h2>
-          {report && (
-            <button className="btn-neo btn-neo-dark" onClick={exportPDF}>
-              <Download size={16} /> Download PDF
-            </button>
-          )}
+
         </header>
 
         {/* Search & Analysis Console Bar */}
@@ -293,7 +330,7 @@ function DashboardPage() {
             <input
               type="text"
               className="neo-input"
-              placeholder="e.g. AAPL, TSLA, WIT, RELIANCE"
+              placeholder="e.g. APPLE, TESLA, RELIANCE"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -327,6 +364,30 @@ function DashboardPage() {
         {/* Report Output Panel */}
         {report && !loading && (
           <>
+            {/* Empty Data Warning Card */}
+            {companyMetrics.peRatio === 'N/A' && companyMetrics.profitMargin === 'N/A' && companyMetrics.eps === 'N/A' && companyNews.length === 0 && !filingData && (
+              <div style={{
+                padding: '20px',
+                border: '3px solid #000000',
+                backgroundColor: '#ffe4e6', // Light red warning background
+                borderRadius: 'var(--radius-md)',
+                fontWeight: '800',
+                fontSize: '14.5px',
+                boxShadow: '4px 4px 0px #000000',
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                color: '#000000'
+              }}>
+                <span style={{ fontSize: '20px' }}>⚠️</span>
+                <div>
+                  <strong style={{ fontSize: '15.5px', display: 'block', marginBottom: '4px' }}>Unrecognized Ticker or Non-Public Query</strong>
+                  No public stock financials, news, or SEC filings could be found for "{report.symbol}". Please ensure you entered a valid ticker symbol (e.g., AAPL, TSLA, or RELIANCE.NS for Indian markets).
+                </div>
+              </div>
+            )}
+
             {/* Top Row: Profile & Verdict (Left) + Financial Metrics Grid (Right) */}
             <section className="stock-profile-row">
               {/* Profile & AI Verdict Card */}
@@ -336,17 +397,40 @@ function DashboardPage() {
                     <h3 className="company-title">{report.companyName}</h3>
                     <span className="company-ticker">Ticker: {report.symbol.toUpperCase()}</span>
                   </div>
-                  <span className={report.decision.recommendation === 'Invest' ? 'badge-invest' : 'badge-pass'}>
-                    {report.decision.recommendation.toUpperCase()}
+                  <span className={getRecommendationClass(report.decision.recommendation)}>
+                    {report.decision.recommendation ? report.decision.recommendation.toUpperCase() : 'PASS'}
                   </span>
                 </div>
 
                 <div className="verdict-score-wrapper">
                   <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Verdict Score</span>
                   <div className="progress-bar-container">
-                    <div className="progress-bar-fill" style={{ width: `${report.decision.score}%` }}></div>
+                    <div 
+                      className="progress-bar-fill" 
+                      style={{ 
+                        width: `${report.decision.score}%`, 
+                        backgroundColor: getScoreColor(report.decision.score) 
+                      }}
+                    ></div>
                   </div>
-                  <span className="progress-score-text">{report.decision.score}/100</span>
+                  <span className="progress-score-text" style={{ color: getScoreColor(report.decision.score), display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    {report.decision.score}/100
+                    <span 
+                      style={{ 
+                        fontSize: '11px', 
+                        padding: '2px 8px', 
+                        border: '2px solid #000000', 
+                        borderRadius: '4px', 
+                        backgroundColor: getScoreColor(report.decision.score), 
+                        color: '#000000', 
+                        boxShadow: '1.5px 1.5px 0px #000000', 
+                        fontWeight: '900',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {report.decision.recommendation ? report.decision.recommendation : 'PASS'}
+                    </span>
+                  </span>
                 </div>
 
                 <p className="verdict-reasoning">
@@ -354,36 +438,119 @@ function DashboardPage() {
                 </p>
               </div>
 
-              {/* Financial Metrics Grid Panel */}
-              <div className="metrics-card">
-                <span className="metrics-title">Raw Financial Profile</span>
-                <div className="metrics-grid">
-                  <div className="metric-cell">
-                    <span className="metric-label">P/E Ratio (TTM)</span>
-                    <span className="metric-value">
-                      {typeof companyMetrics.peRatio === 'number' ? companyMetrics.peRatio.toFixed(2) : companyMetrics.peRatio}
-                    </span>
-                  </div>
-                  <div className="metric-cell">
-                    <span className="metric-label">Profit Margin</span>
-                    <span className="metric-value">{formatMargin(companyMetrics.profitMargin)}</span>
-                  </div>
-                  <div className="metric-cell">
-                    <span className="metric-label">EPS (Basic)</span>
-                    <span className="metric-value">
-                      {typeof companyMetrics.eps === 'number' ? companyMetrics.eps.toFixed(2) : companyMetrics.eps}
-                    </span>
-                  </div>
-                  <div className="metric-cell">
-                    <span className="metric-label">52-Week Range</span>
-                    <span className="metric-value" style={{ fontSize: '13px', fontWeight: 900, marginTop: '6px' }}>
-                      H: {typeof companyMetrics.high52 === 'number' ? `$${companyMetrics.high52.toFixed(2)}` : companyMetrics.high52}<br />
-                      L: {typeof companyMetrics.low52 === 'number' ? `$${companyMetrics.low52.toFixed(2)}` : companyMetrics.low52}
-                    </span>
+              {/* Financial Metrics Grid Panel OR Sentiment Outlook Card */}
+              {hasFinancials ? (
+                <div className="metrics-card">
+                  <span className="metrics-title">Raw Financial Profile</span>
+                  <div className="metrics-grid">
+                    <div className="metric-cell">
+                      <span className="metric-label">P/E Ratio (TTM)</span>
+                      <span className="metric-value">
+                        {typeof companyMetrics.peRatio === 'number' ? companyMetrics.peRatio.toFixed(2) : companyMetrics.peRatio}
+                      </span>
+                    </div>
+                    <div className="metric-cell">
+                      <span className="metric-label">Profit Margin</span>
+                      <span className="metric-value">{formatMargin(companyMetrics.profitMargin)}</span>
+                    </div>
+                    <div className="metric-cell">
+                      <span className="metric-label">EPS (Basic)</span>
+                      <span className="metric-value">
+                        {typeof companyMetrics.eps === 'number' ? companyMetrics.eps.toFixed(2) : companyMetrics.eps}
+                      </span>
+                    </div>
+                    <div className="metric-cell">
+                      <span className="metric-label">52-Week Range</span>
+                      <span className="metric-value" style={{ fontSize: '13px', fontWeight: 900, marginTop: '6px' }}>
+                        H: {typeof companyMetrics.high52 === 'number' ? `$${companyMetrics.high52.toFixed(2)}` : companyMetrics.high52}<br />
+                        L: {typeof companyMetrics.low52 === 'number' ? `$${companyMetrics.low52.toFixed(2)}` : companyMetrics.low52}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                (() => {
+                  const score = calculateSentimentScore(report.agentAnalyses.newsAnalysis);
+                  
+                  // Helper for styling score indicator
+                  const getIndicatorColor = (val) => {
+                    if (val >= 60) return '#22c55e'; // Green
+                    if (val >= 40) return '#ff9e22'; // Orange/Yellow
+                    return '#ff5e97'; // Pink/Red
+                  };
+                  
+                  const getIndicatorText = (val) => {
+                    if (val >= 60) return 'Bullish / Positive';
+                    if (val >= 40) return 'Neutral Sentiment';
+                    return 'Bearish / Cautious';
+                  };
+
+                  return (
+                    <div className="metrics-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <span className="metrics-title">Sentiment &amp; Data Status</span>
+                      
+                      {/* Section 1: Sentiment Index */}
+                      <div style={{ 
+                        border: '3px solid #000000', 
+                        padding: '12px 14px', 
+                        borderRadius: 'var(--radius-sm)', 
+                        backgroundColor: '#ffffff',
+                        boxShadow: '3px 3px 0px #000000'
+                      }}>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>News Sentiment Index</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                          <div className="progress-bar-container" style={{ margin: 0, height: '12px', backgroundColor: '#e5e7eb' }}>
+                            <div className="progress-bar-fill" style={{ width: `${score}%`, backgroundColor: getIndicatorColor(score) }}></div>
+                          </div>
+                          <span style={{ fontSize: '13px', fontWeight: '900', whiteSpace: 'nowrap' }}>{score}%</span>
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: '800', color: getIndicatorColor(score), textTransform: 'uppercase' }}>
+                          {getIndicatorText(score)}
+                        </span>
+                      </div>
+
+                      {/* Section 2: Connection Status Table */}
+                      <div>
+                        <span style={{ fontSize: '10px', fontWeight: '900', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Data Source Status</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', fontWeight: '800', paddingBottom: '4px', borderBottom: '1px dashed #000' }}>
+                            <span>Finnhub Financials</span>
+                            <span style={{ backgroundColor: '#f3f4f6', border: '1.5px solid #000', padding: '1px 6px', borderRadius: '3px', fontSize: '8.5px', fontWeight: '900' }}>PRIVATE</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', fontWeight: '800', paddingBottom: '4px', borderBottom: '1px dashed #000' }}>
+                            <span>SEC EDGAR Filings</span>
+                            <span style={{ backgroundColor: '#f3f4f6', border: '1.5px solid #000', padding: '1px 6px', borderRadius: '3px', fontSize: '8.5px', fontWeight: '900' }}>UNREGISTERED</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', fontWeight: '800', paddingBottom: '4px', borderBottom: '1px dashed #000' }}>
+                            <span>Tavily Intelligence Feed</span>
+                            <span style={{ backgroundColor: '#dcfce7', color: '#166534', border: '1.5px solid #000', padding: '1px 6px', borderRadius: '3px', fontSize: '8.5px', fontWeight: '900' }}>CONNECTED</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
             </section>
+
+            {/* AI Investment Highlights section */}
+            {report.decision.highlights && report.decision.highlights.length > 0 && (
+              <section className="highlights-section-card">
+                <h3 className="highlights-section-title">💡 Critical Pre-Investment Takeaways</h3>
+                <div className="highlights-grid">
+                  {report.decision.highlights.map((hl, idx) => (
+                    <div key={idx} className={`highlight-item-card type-${hl.type}`}>
+                      <span className="highlight-icon">
+                        {hl.type === 'positive' && '🟢'}
+                        {hl.type === 'negative' && '🔴'}
+                        {hl.type === 'warning' && '🟡'}
+                      </span>
+                      <p className="highlight-text">{hl.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Middle Row: The 3 Specialist Agent Reports */}
             <section className="bottom-section">
@@ -424,6 +591,18 @@ function DashboardPage() {
                     {renderBulletPoints(report.agentAnalyses.riskAnalysis)}
                   </div>
                 </div>
+
+                <div className="agent-card">
+                  <div className="card-header">
+                    <div className="card-icon-box icon-purple">
+                      <Users size={18} />
+                    </div>
+                    <h4>Trust &amp; Reputation Agent</h4>
+                  </div>
+                  <div className="agent-content">
+                    {renderBulletPoints(report.agentAnalyses.trustAnalysis)}
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -445,7 +624,7 @@ function DashboardPage() {
                         >
                           {article.title} <ExternalLink size={12} />
                         </a>
-                        <p className="news-summary">{article.content}</p>
+                        <p className="news-summary">{renderHighlightedSummary(article.content, 75)}</p>
                       </div>
                     ))
                   ) : (
@@ -463,7 +642,7 @@ function DashboardPage() {
                   {filingData ? (
                     <>
                       <p className="filing-title">{filingData.title}</p>
-                      <p className="filing-snippet">"{filingData.snippet}"</p>
+                      <p className="filing-snippet">"{renderHighlightedSummary(filingData.snippet, 75)}"</p>
                     </>
                   ) : (
                     <p className="filing-title" style={{ color: 'var(--text-muted)' }}>No annual filing retrieved.</p>

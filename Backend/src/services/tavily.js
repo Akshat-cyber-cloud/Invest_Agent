@@ -58,6 +58,57 @@ async function getCompanyNews(companyName) {
     }
 }
 
+// This function searches for trust, customer reviews, and brand reputation of the company
+async function getCompanyTrustAndReviews(companyName) {
+    const url = "https://api.tavily.com/search";
+    
+    const requestBody = {
+        api_key: apiKey,
+        query: companyName + " customer reviews brand reputation rating employee glassdoor trustability",
+        search_depth: "advanced",
+        max_results: 3
+    };
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.log("Tavily API (Trust) returned error status:", response.status, errText);
+            return [];
+        }
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            return [];
+        }
+
+        const results = data.results || [];
+        const items = [];
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            items.push({
+                title: item.title,
+                url: item.url,
+                content: item.content
+            });
+        }
+        return items;
+    } catch (error) {
+        console.log("Error in getCompanyTrustAndReviews:", error);
+        return [];
+    }
+}
+
 module.exports = {
-    getCompanyNews
+    getCompanyNews,
+    getCompanyTrustAndReviews
 };

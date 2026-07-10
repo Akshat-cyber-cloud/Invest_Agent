@@ -496,6 +496,92 @@ body {
   padding: 24px;
   justify-content: space-between;
   flex-shrink: 0;
+  position: relative;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar Toggle Button styling */
+.sidebar-toggle-btn {
+  position: absolute;
+  top: 24px;
+  right: -16px;
+  width: 28px;
+  height: 28px;
+  background-color: #ffffff;
+  border: 3px solid #000000;
+  border-radius: 50%;
+  box-shadow: 2px 2px 0px #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.15s ease;
+  padding: 0;
+  color: #000000;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #ffcc00;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.sidebar-toggle-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Collapsed Sidebar styles */
+.sidebar.collapsed {
+  width: 84px;
+  padding: 24px 12px;
+}
+
+.sidebar.collapsed .sidebar-logo span {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  justify-content: center;
+}
+
+.sidebar.collapsed .profile-card {
+  padding: 8px;
+  border-width: 3px;
+  justify-content: center;
+  box-shadow: 2px 2px 0px #000000;
+  width: 44px;
+  height: 44px;
+  align-self: center;
+}
+
+.sidebar.collapsed .profile-info {
+  display: none;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 10px;
+  width: 44px;
+  height: 44px;
+  align-self: center;
+}
+
+.sidebar.collapsed .menu-item span {
+  display: none;
+}
+
+.sidebar.collapsed .history-section {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-bottom {
+  border-top: 3px solid #000000;
+  padding-top: 16px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .sidebar-top {
@@ -833,6 +919,17 @@ body {
   box-shadow: 3px 3px 0px #000000;
 }
 
+.badge-hold {
+  color: #000000;
+  background-color: #ff9e22; /* Vibrant Orange */
+  border: 3px solid #000000;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 3px 3px 0px #000000;
+}
+
 .verdict-score-wrapper {
   display: flex;
   align-items: center;
@@ -926,6 +1023,77 @@ body {
   color: #000000;
 }
 
+/* AI Investment Highlights styling */
+.highlights-section-card {
+  background-color: #ffffff;
+  border: 3px solid #000000;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: 6px 6px 0px #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.highlights-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.highlight-item-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 3px solid #000000;
+  border-radius: var(--radius-sm);
+  box-shadow: 3.5px 3.5px 0px #000000;
+  background-color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.highlight-item-card:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 5px 5px 0px #000000;
+}
+
+.highlight-item-card.type-positive {
+  background-color: #ecfdf5; /* Tailwind emerald-50 style */
+}
+
+.highlight-item-card.type-negative {
+  background-color: #fff1f2; /* Tailwind rose-50 style */
+}
+
+.highlight-item-card.type-warning {
+  background-color: #fef9c3; /* Light yellow background */
+}
+
+.highlight-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.highlight-text {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #000000;
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* --- Row: Agent Reports --- */
 .reports-section-title {
   font-family: 'Outfit', sans-serif;
@@ -935,7 +1103,7 @@ body {
 
 .agent-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 20px;
 }
 
@@ -951,6 +1119,7 @@ body {
 .agent-card:nth-child(1) { background-color: #e0f2fe; } /* Blue/Cyan (Financial) */
 .agent-card:nth-child(2) { background-color: #dcfce7; } /* Green (Sentiment) */
 .agent-card:nth-child(3) { background-color: #ffe4e6; } /* Pink/Rose (Risk) */
+.agent-card:nth-child(4) { background-color: #f3e8ff; } /* Purple/Lavender (Trust) */
 
 .agent-card:hover {
   transform: translate(-3px, -3px);
@@ -984,6 +1153,7 @@ body {
 .icon-blue { background-color: #5d6eff; color: #ffffff; }
 .icon-green { background-color: #22c55e; color: #000000; }
 .icon-red { background-color: #ff5e97; color: #ffffff; }
+.icon-purple { background-color: #a855f7; color: #ffffff; }
 
 .agent-content {
   font-size: 13.5px;

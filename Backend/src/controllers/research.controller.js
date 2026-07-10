@@ -18,29 +18,59 @@ async function researchCompany(req, res) {
         console.log("🚀 [Server] Starting investment research for: " + symbol.toUpperCase());
         console.log("========================================");
 
+        let targetSymbol = symbol.trim().toUpperCase();
+
+        // Ticker Resolution: If it contains spaces or is longer than 4 chars, query Finnhub to resolve to a stock symbol
+        if (targetSymbol.includes(" ") || targetSymbol.length > 4) {
+            console.log(`🔍 [Server] Resolving name "${targetSymbol}" to stock ticker...`);
+            const searchResults = await finnhubService.searchSymbol(targetSymbol);
+            if (searchResults && searchResults.result && searchResults.result.length > 0) {
+                // Find best stock symbol match (Common Stock or ADR)
+                const exactSymbolMatch = searchResults.result.find(r => 
+                    r.symbol.toUpperCase().replace(/\.[A-Z]+$/, '') === targetSymbol && 
+                    (r.type === "Common Stock" || r.type === "ADR")
+                );
+
+                const prefixSymbolMatch = searchResults.result.find(r => 
+                    r.symbol.toUpperCase().startsWith(targetSymbol) && 
+                    (r.type === "Common Stock" || r.type === "ADR")
+                );
+
+                const commonStockMatch = searchResults.result.find(r => 
+                    r.type === "Common Stock" || r.type === "ADR"
+                );
+
+                const bestMatch = exactSymbolMatch || prefixSymbolMatch || commonStockMatch || searchResults.result[0];
+                targetSymbol = bestMatch.symbol;
+                console.log(`🎯 [Server] Resolved to ticker: ${targetSymbol} (Type: ${bestMatch.type || 'N/A'}, Desc: ${bestMatch.description || 'N/A'})`);
+            }
+        }
+
         // Step 1: Fetch company metrics and details from Finnhub
         console.log("📊 [Server] Fetching Finnhub financials...");
-        const profile = await finnhubService.getCompanyProfile(symbol);
-        const metrics = await finnhubService.getCompanyMetrics(symbol);
+        const profile = await finnhubService.getCompanyProfile(targetSymbol);
+        const metrics = await finnhubService.getCompanyMetrics(targetSymbol);
 
         // Fall back to the symbol if the profile name isn't found
-        const companyName = (profile && profile.name) ? profile.name : symbol;
+        const companyName = (profile && profile.name) ? profile.name : targetSymbol;
 
-        // Step 2: Fetch news articles and annual report URL in parallel to save time
-        console.log("🕸️ [Server] Fetching Tavily news and searching for report PDF...");
-        const [news, filing] = await Promise.all([
+        // Step 2: Fetch news articles, annual report URL, and reputation reviews in parallel to save time
+        console.log("🕸️ [Server] Fetching Tavily news, trust reputation, and SEC report PDF...");
+        const [news, filing, trust] = await Promise.all([
             tavilyService.getCompanyNews(companyName),
-            edgarService.getLatest10K(companyName)
+            edgarService.getLatest10K(companyName),
+            tavilyService.getCompanyTrustAndReviews(companyName)
         ]);
 
         // Step 3: Run the Multi-Agent LangGraph workflow
         console.log("🧠 [Server] Initializing LangGraph multi-agent flow...");
         const initialGraphState = {
-            symbol: symbol.toUpperCase(),
+            symbol: targetSymbol.toUpperCase(),
             companyName: companyName,
             financialData: metrics,
             newsData: news,
-            filingData: filing
+            filingData: filing,
+            trustData: trust
         };
 
         // Running the workflow compiled in agent.js
@@ -51,18 +81,23 @@ async function researchCompany(req, res) {
 
         // Step 4: Respond with a consolidated JSON report
         res.status(200).json({
-            symbol: symbol.toUpperCase(),
+            symbol: targetSymbol.toUpperCase(),
             companyName: companyName,
             profile: profile,
-            rawData: {
-                metrics: metrics,
-                news: news,
-                filing: filing
+            companyMetrics: {
+                peRatio: (metrics && metrics.peRatio !== undefined) ? metrics.peRatio : 'N/A',
+                profitMargin: (metrics && metrics.netProfitMargin !== undefined) ? metrics.netProfitMargin : 'N/A',
+                eps: (metrics && metrics.eps !== undefined) ? metrics.eps : 'N/A',
+                high52: (metrics && metrics.high52Week !== undefined) ? metrics.high52Week : 'N/A',
+                low52: (metrics && metrics.low52Week !== undefined) ? metrics.low52Week : 'N/A'
             },
+            companyNews: news,
+            filingData: filing,
             agentAnalyses: {
                 financialAnalysis: resultState.financialAnalysis,
                 newsAnalysis: resultState.newsAnalysis,
-                riskAnalysis: resultState.riskAnalysis
+                riskAnalysis: resultState.riskAnalysis,
+                trustAnalysis: resultState.trustAnalysis
             },
             decision: resultState.decision
         });
