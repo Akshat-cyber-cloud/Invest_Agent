@@ -1,6 +1,46 @@
-# Clario: Multi-Agent Investment Research Terminal
+# Clari: Multi-Agent Investment Research Terminal
 
-Clario is an AI-powered financial research terminal that runs a **parallel, specialist multi-agent workflow** for any given company or stock ticker. It ingests data from four distinct sources — real-time stock metrics, live news, SEC annual report filings, and public reputation data — and synthesizes all of it into a structured **Invest / Hold / Pass** verdict, displayed on a custom Neobrutalist dashboard.
+Clario is an AI-powered financial research terminal designed to run parallel, specialist multi-agent workflows. It ingests data from multiple financial and public feedback channels, resolves ticker symbols, and outputs a structured investment verdict alongside granular agent reports on a custom, responsive Neobrutalist dashboard.
+
+---
+
+##  System Architecture
+
+Clario uses a **Frontend-Backend separation** combined with a **parallel multi-agent workflow** structured using LangGraph.
+
+```mermaid
+graph TD
+    A[Dashboard UI / React] -->|1. Search Ticker / Name| B[Express Server / Node]
+    B -->|2. Resolve Stock Symbol| C[Finnhub API]
+    B -->|3. Fetch Profiles & Metrics| C
+    B -->|4. Parallel Fetch| D[Tavily News API]
+    B -->|4. Parallel Fetch| E[SEC EDGAR / Search]
+    B -->|4. Parallel Fetch| F[Tavily Trust API]
+    
+    B -->|5. Initialize State Graph| G[LangGraph Workflow]
+    
+    subgraph LangGraph Multi-Agent Pipeline
+        G -->|Parallel Fan-Out| H[Financial Analyst Agent]
+        G -->|Parallel Fan-Out| I[News Sentiment Agent]
+        G -->|Parallel Fan-Out| J[Risk Officer Agent]
+        G -->|Parallel Fan-Out| K[Trust & Reputation Agent]
+        
+        H -->|Direct llm.invoke| L[Groq Llama-3.1 8B]
+        I -->|Direct llm.invoke| L
+        J -->|Direct llm.invoke| L
+        K -->|Direct llm.invoke| L
+        
+        H -->|Fan-In Summaries| M[Decision Agent]
+        I -->|Fan-In Summaries| M
+        J -->|Fan-In Summaries| M
+        K -->|Fan-In Summaries| M
+        
+        M -->|Consolidated JSON Verdict| N[__end__]
+    end
+    
+    N -->|6. Return Response JSON| B
+    B -->|7. Render Layout Cards| A
+```
 
 ---
 
